@@ -121,27 +121,64 @@ int is_valid(struct node *t, int move)
 	return 1;
 }
 
+void ind_sort(int *nmoves, int *inds)
+{
+        int i, j;
+        for (i = 0; i < 9; i++) {
+                for (j = i + 1; j < 9; j++) {
+                        if (nmoves[j] < nmoves[i]) {
+                                swp(&nmoves[i], &nmoves[j]);
+                                swp(&inds[i], &inds[j]);
+                        }
+                }
+        }
+}
+
+struct npmove
+{
+        int n, ind;
+};
+
+int cmp (const void *xx, const void *yy)
+{
+        struct npmove *x = (struct npmove *)xx;
+        struct npmove *y = (struct npmove *)yy;
+        if (x->n > y->n)
+                return -1;
+        else if (x->n == y->n)
+                return 0;
+        else
+                return 1;
+}
+
 int find_moves(struct node *t)
 {
 	int k, i, j;
         int found_moves = 0;
+        int pmoves[9][9*9];
+        struct npmove s[9];
         for (k = 1; k <= 9; k++) {
                 int n = t->nums[k-1];
-                assert(n > 0 && n <= 9);
-                assert(t->stat[k-1] >= 0 && t->stat[k-1] <= 9);
-                if (t->stat[k-1] == 9)
-                        continue;
+                assert(n > 0 && n <= 9 && t->stat[k-1] >= 0 && t->stat[k-1] <= 9);
+                s[n-1].n = 0;
+                s[k-1].ind = k - 1;
                 for (i = 1; i <= 9; i++) {
                         for (j = 1; j <= 9; j++) {
-				int move;
-				move = n*100+10*j+i;
-				if (is_valid(t, move)) {
-					insert_da(n, move, t);
+                                int move = n*100+10*j+i;
+                                if (is_valid(t, move)) {
+                                        pmoves[n-1][s[n-1].n++] = move;
                                         found_moves = 1;
                                 }
 			}
 		}
 	}
+        qsort(s, 9, sizeof(struct npmove), cmp);
+        for (k = 0; k < 9; k++) {
+                int ind = s[k].ind;
+                for (i = 0; i < s[k].n; i++) {
+                        insert_da(ind + 1, pmoves[ind][i], t);
+                }
+        }
         return found_moves;
 }
 
