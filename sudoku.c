@@ -144,11 +144,11 @@ int cmp (const void *xx, const void *yy)
         struct npmove *x = (struct npmove *)xx;
         struct npmove *y = (struct npmove *)yy;
         if (x->n > y->n)
-                return -1;
+                return 1;
         else if (x->n == y->n)
                 return 0;
         else
-                return 1;
+                return -1;
 }
 
 int find_moves(struct node *t)
@@ -244,9 +244,44 @@ struct node *solve_sudoku(struct node *t)
         return do_solve_sudoku(t, n_moves, 1);
 }
 
+struct node *make_example(void)
+{
+        struct node *t;
+        t = insert_da(9, 914, head);
+        t = insert_da(4, 415, t);
+        t = insert_da(5, 517, t);
+        t = insert_da(3, 319, t);
+        t = insert_da(8, 823, t);
+        t = insert_da(3, 325, t);
+        t = insert_da(7, 727, t);
+        t = insert_da(2, 228, t);
+        t = insert_da(4, 432, t);
+        t = insert_da(8, 841, t);
+        t = insert_da(9, 948, t);
+        t = insert_da(2, 251, t);
+        t = insert_da(5, 552, t);
+        t = insert_da(3, 357, t);
+        t = insert_da(8, 867, t);
+        t = insert_da(4, 468, t);
+        t = insert_da(1, 169, t);
+        t = insert_da(4, 471, t);
+        t = insert_da(6, 672, t);
+        t = insert_da(5, 575, t);
+        t = insert_da(8, 876, t);
+        t = insert_da(7, 782, t);
+        t = insert_da(2, 284, t);
+        t = insert_da(6, 686, t);
+        t = insert_da(1, 191, t);
+        t = insert_da(3, 396, t);
+        return insert_da(7, 799, t);
+}
+
 int main(void)
 {
+        struct node *ex;
         init_tree();
-        solve_sudoku(head);
+        ex = make_example();
+        print_map(ex);
+        solve_sudoku(ex);
         return 0;
 }
