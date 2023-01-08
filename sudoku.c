@@ -5,7 +5,6 @@
 struct node
 {
 	int info;
-        int nums[9], stat[9];
 	struct node *p, *s, *d;
 };
 
@@ -22,10 +21,6 @@ void init_tree(void)
 	z->p = head;
 	z->s = z;
 	z->d = z;
-        for (i = 0; i < 9; i ++) {
-                z->nums[i] = head->nums[i] = i + 1;
-                z->stat[i] = head->stat[i] = 0;
-        }
 }
 
 void swp(int *x, int *y)
@@ -33,30 +28,6 @@ void swp(int *x, int *y)
         int tmp = *x;
         *x = *y;
         *y = tmp;
-}
-
-void bubble_num(struct node *x, int j)
-{
-        int i;
-        for (i = j-1; i >= 0; i--) {
-                if (x->stat[j] > x->stat[i]) {
-                        swp(&x->stat[j], &x->stat[i]);
-                        swp(&x->nums[j], &x->nums[i]);
-                        j = i;
-                }
-        }
-}
-
-int copy_stat(int num, struct node *x, struct node *t)
-{
-        int j = -1, i;
-        for (i = 0; i < 9; i++) {
-                x->nums[i] = t->nums[i];
-                x->stat[i] = t->stat[i];
-                if (num == x->nums[i])
-                        j = i;
-        }
-        return j;
 }
 
 void unpack(int info, int *row, int *col, int *box, int *num)
@@ -75,12 +46,7 @@ void unpack(int info, int *row, int *col, int *box, int *num)
 
 struct node *insert_da(int num, int info, struct node *t)
 {
-        int j=-1;
 	struct node *x = malloc(sizeof(struct node));
-        j = copy_stat(num, x, t);
-        assert(j > -1);
-        x->stat[j]++;
-        bubble_num(x, j);
 	x->info = info;
 	x->s = t->d;
 	t->d = x;
@@ -91,16 +57,11 @@ struct node *insert_da(int num, int info, struct node *t)
 
 struct node *insert_sib(int num, int info, struct node *t)
 {
-        int  j=-1;
 	struct node *x = malloc(sizeof(struct node));
 	x->info = info;
 	x->s = t->s;
 	t->s = x;
 	x->p = t->p;
-        copy_stat(num, x, t->p);
-        assert(j > -1);
-        x->stat[j]++;
-        bubble_num(x, j);
 	x->d = z;
 	return x;
 }
@@ -151,17 +112,20 @@ int cmp (const void *xx, const void *yy)
                 return -1;
 }
 
-int find_moves(struct node *t)
+int immediate(struct node *t)
 {
-	int k, i, j;
+        return 0;
+}
+
+int brute_force(struct node *t)
+{
+	int n, i, j;
         int found_moves = 0;
         int pmoves[9][9*9];
         struct npmove s[9];
-        for (k = 1; k <= 9; k++) {
-                int n = t->nums[k-1];
-                assert(n > 0 && n <= 9 && t->stat[k-1] >= 0 && t->stat[k-1] <= 9);
+        for (n = 1; n <= 9; n++) {
                 s[n-1].n = 0;
-                s[k-1].ind = k - 1;
+                s[n-1].ind = n - 1;
                 for (i = 1; i <= 9; i++) {
                         for (j = 1; j <= 9; j++) {
                                 int move = n*100+10*j+i;
@@ -173,9 +137,9 @@ int find_moves(struct node *t)
 		}
 	}
         qsort(s, 9, sizeof(struct npmove), cmp);
-        for (k = 0; k < 9; k++) {
-                int ind = s[k].ind;
-                for (i = 0; i < s[k].n; i++) {
+        for (n = 0; n < 9; n++) {
+                int ind = s[n].ind;
+                for (i = 0; i < s[n].n; i++) {
                         insert_da(ind + 1, pmoves[ind][i], t);
                 }
         }
@@ -219,7 +183,9 @@ struct node *do_solve_sudoku(struct node *t, int depth, int width)
         }
         if (depth == 9*9)
                 return t;
-        if (find_moves(t)) {
+        if (immediate(t)) {
+                return do_solve_sudoku(t->d, depth + 1, width);
+        } else if (brute_force(t)) {
                 struct node *d_sltn = do_solve_sudoku (t->d, depth + 1, width);
                 if (d_sltn == t->d && t->s != z) {
                         return do_solve_sudoku(t->s, depth, width + 1);
