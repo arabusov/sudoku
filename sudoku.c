@@ -13,7 +13,6 @@ struct node *head, *z;
 
 void init_tree(void)
 {
-        int i;
 	head = (struct node *)malloc(sizeof(struct node));
 	head->p = head;
 	z = (struct node *)malloc(sizeof(struct node));
@@ -96,7 +95,7 @@ void ind_sort(int *nmoves, int *inds)
         }
 }
 
-int check_rows(struct node *t, int (*map)[9], int (*calc_move)(int, int))
+int check_rows(struct node *t, int (*calc_move)(int, int))
 {
         int i, j, n;
         for (i = 0; i < 9; i++) {
@@ -129,27 +128,9 @@ int col_major(int i, int j)
         return j + 1 + (i + 1)*10;
 }
 
-void fill_map(struct node *t, int (*map)[9])
-{
-        int i, j;
-        for (i = 0; i < 9; i++) {
-                for (j = 0; j < 9; j++) {
-                        map[i][j] = 0;
-                }
-        }
-        while (t != head) {
-                int r, c, b, n;
-                unpack(t->info, &r, &c, &b, &n);
-                t = t->p;
-                map[r-1][c-1] = n;
-        }
-}
-
 int immediate(struct node *t)
 {
-        int map[9][9];
-        fill_map(t, map);
-        return check_rows(t, map, &row_major) || check_rows(t, map, &col_major);
+        return check_rows(t, &row_major) || check_rows(t, &col_major);
 }
 
 struct npmove
@@ -268,45 +249,56 @@ struct node *solve_sudoku(struct node *t)
         return do_solve_sudoku(t, n_moves, 1);
 }
 
-struct node *make_example(void)
+void read_map(int (*map)[9])
 {
-        struct node *t;
-        t = insert_da(941, head);
-        t = insert_da(451, t);
-        t = insert_da(571, t);
-        t = insert_da(391, t);
-        t = insert_da(832, t);
-        t = insert_da(352, t);
-        t = insert_da(772, t);
-        t = insert_da(282, t);
-        t = insert_da(423, t);
-        t = insert_da(814, t);
-        t = insert_da(984, t);
-        t = insert_da(215, t);
-        t = insert_da(525, t);
-        t = insert_da(375, t);
-        t = insert_da(876, t);
-        t = insert_da(486, t);
-        t = insert_da(196, t);
-        t = insert_da(417, t);
-        t = insert_da(627, t);
-        t = insert_da(557, t);
-        t = insert_da(867, t);
-        t = insert_da(728, t);
-        t = insert_da(248, t);
-        t = insert_da(668, t);
-        t = insert_da(119, t);
-        t = insert_da(369, t);
-        return insert_da(799, t);
+        int i = 0, j = 0, ch;
+        while (ch = getchar(), ch != EOF) {
+                if (ch == '\n') {
+                        assert(i < 9);
+                        i++;
+                        j = 0;
+                } else {
+                        assert(j < 9);
+                        if (ch == ' ') {
+                                map[i][j] = 0;
+                        } else {
+                                assert(ch >= '0' && ch <= '9');
+                                map[i][j] = ch-'0';
+                        }
+                        j++;
+                }
+        }
+}
+
+struct node *map2tree(int (*map)[9])
+{
+        int i, j;
+        struct node *t = head;
+        for (i = 0; i < 9; i++) {
+                for (j = 0; j < 9; j++) {
+                        if (map[i][j] > 0) {
+                                int move = 100*map[i][j] + i + 1 + 10*(j + 1);
+                                t = insert_da(move, t);
+                        }
+                }
+        }
+        return t;
+}
+
+struct node *read_stdin(void)
+{
+       int map[9][9];
+       read_map(map);
+       return map2tree(map);
 }
 
 int main(void)
 {
-        struct node *ex, *sol;
+        struct node *pr, *sol;
         init_tree();
-        ex = make_example();
-        print_map(ex);
-        sol = solve_sudoku(ex);
+        pr = read_stdin();
+        print_map(pr);
+        sol = solve_sudoku(pr);
         print_map(sol);
         return 0;
 }
