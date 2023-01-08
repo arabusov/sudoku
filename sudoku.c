@@ -110,19 +110,6 @@ int is_valid(struct node *t, int move)
 	return 1;
 }
 
-void ind_sort(int *nmoves, int *inds)
-{
-        int i, j;
-        for (i = 0; i < 9; i++) {
-                for (j = i + 1; j < 9; j++) {
-                        if (nmoves[j] < nmoves[i]) {
-                                swp(&nmoves[i], &nmoves[j]);
-                                swp(&inds[i], &inds[j]);
-                        }
-                }
-        }
-}
-
 int check_rows(struct node *t, int (*calc_move)(int, int))
 {
         int i, j, n;
