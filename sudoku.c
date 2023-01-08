@@ -5,6 +5,7 @@
 struct node
 {
 	int info;
+        int depth;
 	struct node *p, *s, *d;
 };
 
@@ -95,7 +96,7 @@ void ind_sort(int *nmoves, int *inds)
         }
 }
 
-int check_rows(struct node *t, int (*map)[9])
+int check_rows(struct node *t, int (*map)[9], int (*calc_move)(int, int))
 {
         int i, j, n;
         for (i = 0; i < 9; i++) {
@@ -103,20 +104,29 @@ int check_rows(struct node *t, int (*map)[9])
                         int nmoves = 0;
                         int pmove = 0;
                         for (j = 0; j < 9; j++) {
-                                int move = n*100 + i + 1 + (j + 1)*10;
+                                int move = n*100 + (*calc_move)(i, j);
                                 if (is_valid(t, move)) {
                                         nmoves++;
                                         pmove = move;
                                 }
                         }
                         if (nmoves == 1) {
-                                /* printf("found immediate [ n == %d ] == %d\n", n, pmove); */
                                 insert_da(pmove, t);
                                 return 1;
                         }
                 }
         }
         return 0;
+}
+
+int row_major(int i, int j)
+{
+        return i + 1 + (j + 1)*10;
+}
+
+int col_major(int i, int j)
+{
+        return j + 1 + (i + 1)*10;
 }
 
 void fill_map(struct node *t, int (*map)[9])
@@ -139,7 +149,7 @@ int immediate(struct node *t)
 {
         int map[9][9];
         fill_map(t, map);
-        return check_rows(t, map);
+        return check_rows(t, map, &row_major) || check_rows(t, map, &col_major);
 }
 
 struct npmove
@@ -215,40 +225,31 @@ struct node *do_solve_sudoku(struct node *t, int depth, int width)
 {
         static int max_depth = 0;
         static int max_width = 0;
-        static struct node *last;
+        t->depth = depth;
         if (depth > max_depth) {
                 max_depth = depth;
-                last = t;
-                printf("max depth = %d\n", max_depth);
-                printf("max width = %d\n", max_width);
-                print_map(t);
         }
         if (width > max_width) {
-                last = t;
                 max_width = width;
-                printf("max depth = %d\n", max_depth);
-                printf("max width = %d\n", max_width);
-                print_map(t);
         }
         if (depth == 9*9) {
-                last = t;
-                return last;
+                return t;
         }
         if (immediate(t)) {
-                last = t;
                 return do_solve_sudoku(t->d, depth + 1, width);
         } else {
                 if (brute_force(t)) {
                         struct node *da = t->d;
                         int w = width;
                         while (da != z) {
-                                do_solve_sudoku(da, depth, ++w);
+                                struct node *sl = do_solve_sudoku(da, depth + 1, ++w);
                                 da = da->s;
+                                if (sl->depth == 9*9)
+                                        return sl;
                         }
-                        return last;
                 }
         }
-        return last;
+        return z;
 }
 
 int n_sudoku_moves(struct node *t)
