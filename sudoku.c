@@ -44,7 +44,7 @@ void unpack(int info, int *row, int *col, int *box, int *num)
 	assert(*num >= 1 && *num <= 9);
 }
 
-struct node *insert_da(int num, int info, struct node *t)
+struct node *insert_da(int info, struct node *t)
 {
 	struct node *x = malloc(sizeof(struct node));
 	x->info = info;
@@ -55,7 +55,7 @@ struct node *insert_da(int num, int info, struct node *t)
 	return x;
 }
 
-struct node *insert_sib(int num, int info, struct node *t)
+struct node *insert_sib(int info, struct node *t)
 {
 	struct node *x = malloc(sizeof(struct node));
 	x->info = info;
@@ -95,6 +95,53 @@ void ind_sort(int *nmoves, int *inds)
         }
 }
 
+int check_rows(struct node *t, int (*map)[9])
+{
+        int i, j, n;
+        for (i = 0; i < 9; i++) {
+                for (n = 1; n <= 9; n++) {
+                        int nmoves = 0;
+                        int pmove = 0;
+                        for (j = 0; j < 9; j++) {
+                                int move = n*100 + i + 1 + (j + 1)*10;
+                                if (is_valid(t, move)) {
+                                        nmoves++;
+                                        pmove = move;
+                                }
+                        }
+                        if (nmoves == 1) {
+                                /* printf("found immediate [ n == %d ] == %d\n", n, pmove); */
+                                insert_da(pmove, t);
+                                return 1;
+                        }
+                }
+        }
+        return 0;
+}
+
+void fill_map(struct node *t, int (*map)[9])
+{
+        int i, j;
+        for (i = 0; i < 9; i++) {
+                for (j = 0; j < 9; j++) {
+                        map[i][j] = 0;
+                }
+        }
+        while (t != head) {
+                int r, c, b, n;
+                unpack(t->info, &r, &c, &b, &n);
+                t = t->p;
+                map[r-1][c-1] = n;
+        }
+}
+
+int immediate(struct node *t)
+{
+        int map[9][9];
+        fill_map(t, map);
+        return check_rows(t, map);
+}
+
 struct npmove
 {
         int n, ind;
@@ -110,11 +157,6 @@ int cmp (const void *xx, const void *yy)
                 return 0;
         else
                 return -1;
-}
-
-int immediate(struct node *t)
-{
-        return 0;
 }
 
 int brute_force(struct node *t)
@@ -140,7 +182,7 @@ int brute_force(struct node *t)
         for (n = 0; n < 9; n++) {
                 int ind = s[n].ind;
                 for (i = 0; i < s[n].n; i++) {
-                        insert_da(ind + 1, pmoves[ind][i], t);
+                        insert_da(pmoves[ind][i], t);
                 }
         }
         return found_moves;
@@ -161,37 +203,52 @@ void print_map(struct node *t)
                 t = t->p;
                 map[r-1][c-1] = n+'0';
         }
+        printf("+---------+\n");
         for (i = 0; i < 9; i ++) {
                 map[i][9] = '\0';
-                printf("%s\n", map[i]);
+                printf("|%s|\n", map[i]);
         }
+        printf("+---------+\n");
 }
 
 struct node *do_solve_sudoku(struct node *t, int depth, int width)
 {
         static int max_depth = 0;
         static int max_width = 0;
+        static struct node *last;
         if (depth > max_depth) {
-                printf("depth = %d\n", depth);
                 max_depth = depth;
+                last = t;
+                printf("max depth = %d\n", max_depth);
+                printf("max width = %d\n", max_width);
                 print_map(t);
         }
         if (width > max_width) {
-                printf("width = %d\n", width);
+                last = t;
                 max_width = width;
+                printf("max depth = %d\n", max_depth);
+                printf("max width = %d\n", max_width);
                 print_map(t);
         }
-        if (depth == 9*9)
-                return t;
+        if (depth == 9*9) {
+                last = t;
+                return last;
+        }
         if (immediate(t)) {
+                last = t;
                 return do_solve_sudoku(t->d, depth + 1, width);
-        } else if (brute_force(t)) {
-                struct node *d_sltn = do_solve_sudoku (t->d, depth + 1, width);
-                if (d_sltn == t->d && t->s != z) {
-                        return do_solve_sudoku(t->s, depth, width + 1);
+        } else {
+                if (brute_force(t)) {
+                        struct node *da = t->d;
+                        int w = width;
+                        while (da != z) {
+                                do_solve_sudoku(da, depth, ++w);
+                                da = da->s;
+                        }
+                        return last;
                 }
         }
-        return t;
+        return last;
 }
 
 int n_sudoku_moves(struct node *t)
@@ -213,41 +270,42 @@ struct node *solve_sudoku(struct node *t)
 struct node *make_example(void)
 {
         struct node *t;
-        t = insert_da(9, 914, head);
-        t = insert_da(4, 415, t);
-        t = insert_da(5, 517, t);
-        t = insert_da(3, 319, t);
-        t = insert_da(8, 823, t);
-        t = insert_da(3, 325, t);
-        t = insert_da(7, 727, t);
-        t = insert_da(2, 228, t);
-        t = insert_da(4, 432, t);
-        t = insert_da(8, 841, t);
-        t = insert_da(9, 948, t);
-        t = insert_da(2, 251, t);
-        t = insert_da(5, 552, t);
-        t = insert_da(3, 357, t);
-        t = insert_da(8, 867, t);
-        t = insert_da(4, 468, t);
-        t = insert_da(1, 169, t);
-        t = insert_da(4, 471, t);
-        t = insert_da(6, 672, t);
-        t = insert_da(5, 575, t);
-        t = insert_da(8, 876, t);
-        t = insert_da(7, 782, t);
-        t = insert_da(2, 284, t);
-        t = insert_da(6, 686, t);
-        t = insert_da(1, 191, t);
-        t = insert_da(3, 396, t);
-        return insert_da(7, 799, t);
+        t = insert_da(941, head);
+        t = insert_da(451, t);
+        t = insert_da(571, t);
+        t = insert_da(391, t);
+        t = insert_da(832, t);
+        t = insert_da(352, t);
+        t = insert_da(772, t);
+        t = insert_da(282, t);
+        t = insert_da(423, t);
+        t = insert_da(814, t);
+        t = insert_da(984, t);
+        t = insert_da(215, t);
+        t = insert_da(525, t);
+        t = insert_da(375, t);
+        t = insert_da(876, t);
+        t = insert_da(486, t);
+        t = insert_da(196, t);
+        t = insert_da(417, t);
+        t = insert_da(627, t);
+        t = insert_da(557, t);
+        t = insert_da(867, t);
+        t = insert_da(728, t);
+        t = insert_da(248, t);
+        t = insert_da(668, t);
+        t = insert_da(119, t);
+        t = insert_da(369, t);
+        return insert_da(799, t);
 }
 
 int main(void)
 {
-        struct node *ex;
+        struct node *ex, *sol;
         init_tree();
         ex = make_example();
         print_map(ex);
-        solve_sudoku(ex);
+        sol = solve_sudoku(ex);
+        print_map(sol);
         return 0;
 }
