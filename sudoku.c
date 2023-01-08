@@ -265,6 +265,13 @@ struct node *solve_sudoku(struct node *t)
 void read_map(int (*map)[9])
 {
         int i = 0, j = 0, ch;
+        for (i = 0; i < 9; i++) {
+                for (j = 0; j < 9; j++) {
+                        map[i][j] = 0;
+                }
+        }
+        i = 0;
+        j = 0;
         while (ch = getchar(), ch != EOF) {
                 if (ch == '\n') {
                         assert(i < 9);
