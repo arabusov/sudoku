@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# MIT License
+#
+# Copyright (c) 2023 Andrei Rabusov
+
 CWD=$(pwd)
 if [[ ! -f Makefile ]]; then
     echo "Run in the repo root directory"
