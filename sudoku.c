@@ -194,12 +194,10 @@ void print_map(struct node *t)
                 t = t->p;
                 map[r-1][c-1] = n+'0';
         }
-        printf("+---------+\n");
         for (i = 0; i < 9; i ++) {
                 map[i][9] = '\0';
-                printf("|%s|\n", map[i]);
+                printf("%s\n", map[i]);
         }
-        printf("+---------+\n");
 }
 
 struct node *do_solve_sudoku(struct node *t, int depth, int width)
@@ -297,7 +295,6 @@ int main(void)
         struct node *pr, *sol;
         init_tree();
         pr = read_stdin();
-        print_map(pr);
         sol = solve_sudoku(pr);
         print_map(sol);
         return 0;
